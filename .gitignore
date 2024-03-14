@@ -1,0 +1,15 @@
+node_modules
+
+
+# exclude the environment variables 
+.env
+
+# exclude the compiled code
+/dist/
+
+# exclude configuration files 
+/dist/config/
+/src/config/
+
+# exclude prisma database files
+/prisma/
