@@ -11,7 +11,7 @@ class LoggingHelperService {
     this.clientService = clientService;
     this.configService = configService;
     // Using ConfigService to get the logging channel ID from ChannelJSON
-    this.logChannelId = this.configService.Channel.LogChannel; // Adjust 'LogChannel' based on your actual config
+    this.logChannelId = this.configService.Channel.logChannelId; // Adjust 'LogChannel' based on your actual config
     const client = this.clientService.Client;
     this.setupListeners(client);
   }
