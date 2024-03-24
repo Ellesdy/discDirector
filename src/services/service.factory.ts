@@ -39,6 +39,7 @@ class ServiceFactory {
     );
     const commandService = new CommandService();
     const lifecycleHelperService = new LifecycleHelperService(
+      configService,
       clientService,
       commandService,
       messageService,

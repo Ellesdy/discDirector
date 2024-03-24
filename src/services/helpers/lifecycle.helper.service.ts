@@ -5,8 +5,10 @@ import CommandService from "../discordjs/command.service";
 import MessageService from "../system/message.service";
 import MemberService from "../discordjs/member.service";
 import LoggerService from "../system/logger.service";
+import ConfigService from "../system/config.service";
 
 class LifecycleHelperService {
+  private configService: ConfigService;
   private clientService: ClientService;
   private commandService: CommandService;
   private messageService: MessageService;
@@ -14,12 +16,14 @@ class LifecycleHelperService {
   private loggerService: LoggerService;
 
   constructor(
+    configService: ConfigService,
     clientService: ClientService,
     commandService: CommandService,
     messageService: MessageService,
     memberService: MemberService,
     loggerService: LoggerService
   ) {
+    this.configService = configService;
     this.clientService = clientService;
     this.commandService = commandService;
     this.messageService = messageService;
@@ -34,6 +38,10 @@ class LifecycleHelperService {
         this.loggerService.logSystem(`Logged in as ${clientUser.tag}!`);
         await this.commandService.registerCommands();
         await this.memberService.ensureAllGuildMembers();
+        await this.memberService.syncVerifiedMembersWithDiscordRoles();
+        await this.memberService.syncVerifiedMembersWithDatabase(
+          this.configService.Client.guildId
+        );
       }
     });
 
@@ -46,6 +54,7 @@ class LifecycleHelperService {
         false,
         []
       );
+      await this.memberService.syncVerifiedMembersWithDatabase(member.guild.id);
     });
 
     this.clientService.Client.on("interactionCreate", async (interaction) => {

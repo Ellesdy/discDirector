@@ -28,52 +28,37 @@ class MemberService {
     return guild.members.fetch(userID);
   }
 
-  // MemberService adjustments
   async ensureMember(
-    discordId: Snowflake,
+    discordId: string,
     username: string,
     guildName: string,
     guildId: string,
     isVerified: boolean,
-    roles: RoleResolvable[] = []
+    roleIds: string[] = [] // Assuming these are the role strings you want to associate
   ): Promise<void> {
     try {
-      const roleIds = roles.map((role) =>
-        typeof role === "string" ? role : role.id
-      );
-
-      await prisma.member.upsert({
+      // Upsert the member to ensure they exist
+      const member = await prisma.member.upsert({
         where: { discordId },
-        update: {
-          username,
-          isVerified,
-        },
-        create: {
-          discordId,
-          username,
-          guildName,
-          guildId,
-          isVerified,
-        },
+        update: { username, isVerified, guildName, guildId },
+        create: { discordId, username, isVerified, guildName, guildId },
       });
 
-      // console.log(`Member ${discordId} upserted with verification status: ${isVerified}.');
-
+      // Assuming roleIds are strings that you want to assign to the member
+      // Clear existing roles
       await prisma.memberRole.deleteMany({
-        where: { memberId: discordId }, // Assuming `memberId` in `MemberRole` refers to `discordId` in `Member`
+        where: { memberId: member.id },
       });
 
-      // Then, add the new set of roles
-      for (const roleId of roleIds) {
+      // Assign new roles
+      for (const role of roleIds) {
         await prisma.memberRole.create({
           data: {
-            memberId: discordId, // Ensure this matches your schema's expectations
-            role: roleId,
+            role,
+            memberId: member.id, // This should reference the actual Member ID
           },
         });
       }
-
-      // console.log(`Roles for member ${discordId} updated in database.`);
     } catch (error) {
       console.error("Error ensuring member in database:", error);
     }
@@ -128,6 +113,71 @@ class MemberService {
     const member = await this.getMemberById(guildId, memberId);
     if (!member) return null;
     return member.user.username;
+  }
+
+  async syncVerifiedMembersWithDiscordRoles(): Promise<void> {
+    try {
+      const guild = await this.guildService.getGuild(
+        this.configService.Client.guildId
+      );
+      if (!guild) return;
+
+      const verifiedMembers = await prisma.member.findMany({
+        where: { isVerified: true },
+      });
+
+      for (const verifiedMember of verifiedMembers) {
+        const member = await guild.members
+          .fetch(verifiedMember.discordId)
+          .catch(() => null);
+        if (!member) continue;
+
+        const hasVerifiedRole = member.roles.cache.has(
+          this.configService.Role.isVerified
+        );
+        if (!hasVerifiedRole) {
+          await member.roles.add(this.configService.Role.isVerified);
+        }
+        // Optionally remove the Unverified role if present
+        if (member.roles.cache.has(this.configService.Role.notVerified)) {
+          await member.roles.remove(this.configService.Role.notVerified);
+        }
+      }
+    } catch (error) {
+      console.error(
+        "Error syncing verified members with Discord roles:",
+        error
+      );
+    }
+  }
+
+  async syncVerifiedMembersWithDatabase(guildId: Snowflake): Promise<void> {
+    try {
+      const guild = await this.guildService.getGuild(guildId);
+      if (!guild) return;
+
+      // Fetch the verified role ID from your configuration
+      const verifiedRoleId = this.configService.Role.isVerified; // Assume this is configured correctly
+
+      const members = await guild.members.fetch();
+      for (const member of members.values()) {
+        const isVerifiedInDiscord = member.roles.cache.has(verifiedRoleId);
+
+        // Only update the database if the member has the verified role in Discord
+        if (isVerifiedInDiscord) {
+          await this.ensureMember(
+            member.id,
+            member.user.username,
+            guild.name,
+            guild.id,
+            true, // Set isVerified to true since the member has the verified role
+            member.roles.cache.map((role) => role.id)
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error syncing verified members with database:", error);
+    }
   }
 }
 
