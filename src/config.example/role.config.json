@@ -1,0 +1,6 @@
+{
+    "Name": "Role",
+    "canVerify": "CAN_VERIFY_ROLE_ID",
+    "isVerified": "IS_VERIFIED_ROLE_ID",
+    "notVerified": "NOT_VERIFIED_ROLE_ID"
+}
