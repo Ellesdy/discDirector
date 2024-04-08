@@ -1,51 +1,47 @@
-import { Client, CommandInteraction, Interaction, Message } from "discord.js";
+import { injectable, inject } from "inversify";
+import { TYPES } from "../../types";
+import { ClientServiceInterface } from "../../interfaces/client.service.interface";
+import { CommandServiceInterface } from "../../interfaces/command.service.interface";
+import { MessageServiceInterface } from "../../interfaces/message.service.interface";
+import { MemberServiceInterface } from "../../interfaces/member.service.interface";
+import { LoggerServiceInterface } from "../../interfaces/logger.service.interface";
+import { ConfigServiceInterface } from "../../interfaces/config.service.interface";
+import { GuildMember, Interaction } from "discord.js";
 
-import ClientService from "../discordjs/client.service";
-import CommandService from "../discordjs/command.service";
-import MessageService from "../system/message.service";
-import MemberService from "../discordjs/member.service";
-import LoggerService from "../system/logger.service";
-import ConfigService from "../system/config.service";
-
-class LifecycleHelperService {
-  private configService: ConfigService;
-  private clientService: ClientService;
-  private commandService: CommandService;
-  private messageService: MessageService;
-  private memberService: MemberService;
-  private loggerService: LoggerService;
-
+@injectable()
+export class LifecycleHelperService {
   constructor(
-    configService: ConfigService,
-    clientService: ClientService,
-    commandService: CommandService,
-    messageService: MessageService,
-    memberService: MemberService,
-    loggerService: LoggerService
-  ) {
-    this.configService = configService;
-    this.clientService = clientService;
-    this.commandService = commandService;
-    this.messageService = messageService;
-    this.memberService = memberService;
-    this.loggerService = loggerService;
-  }
+    @inject(TYPES.ConfigServiceInterface)
+    private configService: ConfigServiceInterface,
+    @inject(TYPES.ClientServiceInterface)
+    private clientService: ClientServiceInterface,
+    @inject(TYPES.CommandServiceInterface)
+    private commandService: CommandServiceInterface,
+    @inject(TYPES.MessageServiceInterface)
+    private messageService: MessageServiceInterface,
+    @inject(TYPES.MemberServiceInterface)
+    private memberService: MemberServiceInterface,
+    @inject(TYPES.LoggerServiceInterface)
+    private loggerService: LoggerServiceInterface
+  ) {}
 
   async setupListeners(): Promise<void> {
-    this.clientService.Client.on("ready", async () => {
-      const clientUser = this.clientService.Client.user;
+    const client = this.clientService.Client;
+
+    client.on("ready", async () => {
+      const clientUser = client.user;
       if (clientUser) {
         this.loggerService.logSystem(`Logged in as ${clientUser.tag}!`);
         await this.commandService.registerCommands();
         await this.memberService.ensureAllGuildMembers();
         await this.memberService.syncVerifiedMembersWithDiscordRoles();
         await this.memberService.syncVerifiedMembersWithDatabase(
-          this.configService.Client.guildId
+          this.configService.getGuildId()
         );
       }
     });
 
-    this.clientService.Client.on("guildMemberAdd", async (member) => {
+    client.on("guildMemberAdd", async (member: GuildMember) => {
       await this.memberService.ensureMember(
         member.id,
         member.user.username,
@@ -57,12 +53,10 @@ class LifecycleHelperService {
       await this.memberService.syncVerifiedMembersWithDatabase(member.guild.id);
     });
 
-    this.clientService.Client.on("interactionCreate", async (interaction) => {
+    client.on("interactionCreate", async (interaction: Interaction) => {
       if (!interaction.isCommand()) return;
 
-      this.commandService.handleCommand(interaction);
+      await this.commandService.handleCommand(interaction);
     });
   }
 }
-
-export default LifecycleHelperService;

@@ -12,4 +12,5 @@ node_modules
 /src/config/
 
 # exclude prisma database files
-/prisma/
+/prisma/migrations
+/prisma/*.db

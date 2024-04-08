@@ -1,19 +1,20 @@
-import LoggerService from "../system/logger.service";
-import ConfigService from "../system/config.service";
+import { injectable, inject } from "inversify";
+import { TYPES } from "../../types";
+import { LoggerServiceInterface } from "../../interfaces/logger.service.interface";
+import { ConfigServiceInterface } from "../../interfaces/config.service.interface";
+import { ValidationHelperServiceInterface } from "../../interfaces/validation.helper.service.interface";
+import { ConfigType } from "../../types"; // Import ConfigType from where it is defined
 
-type ConfigType = {
-  Name: string;
-  Content: string;
-};
-
-class ValidationHelperService {
-  private loggerService: LoggerService;
-  private configService: ConfigService;
-
-  constructor(loggerService: LoggerService, configService: ConfigService) {
-    this.loggerService = loggerService;
-    this.configService = configService;
-  }
+@injectable()
+export class ValidationHelperService
+  implements ValidationHelperServiceInterface
+{
+  constructor(
+    @inject(TYPES.LoggerServiceInterface)
+    private loggerService: LoggerServiceInterface,
+    @inject(TYPES.ConfigServiceInterface)
+    private configService: ConfigServiceInterface
+  ) {}
 
   logValidationStart(validationType: string): void {
     this.loggerService.logSystem(`Starting ${validationType} validation...`);
@@ -51,7 +52,7 @@ class ValidationHelperService {
       if (!parsedConfig.Name || typeof parsedConfig.Content === "undefined") {
         throw new Error("Config is missing Name or Content.");
       }
-      return parsedConfig as ConfigType;
+      return parsedConfig as ConfigType; // Now correctly recognizes ConfigType
     } catch (e) {
       if (e instanceof Error) {
         throw new Error(`Error parsing config: ${e.message}`);
@@ -87,5 +88,3 @@ class ValidationHelperService {
     this.logValidationEnd("config");
   }
 }
-
-export default ValidationHelperService;

@@ -13,7 +13,9 @@
   "dependencies": {
     "@prisma/client": "^5.10.2",
     "@types/node": "^20.11.25",
-    "discord.js": "^14.14.1"
+    "discord.js": "^14.14.1",
+    "inversify": "^6.0.2",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "prisma": "^5.10.2"

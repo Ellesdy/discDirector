@@ -1,6 +1,8 @@
+import { injectable } from "inversify";
 import { Client } from "discord.js";
-import ConfigService from "../system/config.service";
+import { ConfigService } from "../system/config.service";
 
+@injectable()
 export class ClientService {
   private client: Client;
   private configService: ConfigService;
@@ -27,5 +29,3 @@ export class ClientService {
     }
   }
 }
-
-export default ClientService;

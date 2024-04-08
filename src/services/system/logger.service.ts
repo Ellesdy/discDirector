@@ -1,6 +1,9 @@
-import MessageService from "./message.service";
+import { injectable } from "inversify";
+import { MessageService } from "./message.service";
+import { LoggerServiceInterface } from "../../interfaces/logger.service.interface";
 
-class LoggerService {
+@injectable()
+export class LoggerService implements LoggerServiceInterface {
   private messageService: MessageService;
 
   constructor(messageService: MessageService) {
@@ -44,5 +47,3 @@ class LoggerService {
     console.error(formattedMessage);
   }
 }
-
-export default LoggerService;

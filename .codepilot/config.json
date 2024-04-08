@@ -1,0 +1,1 @@
+{"model":"gpt-4","sources":["./src/config/","./src/commands/"],"extensions":[".json",".ts"],"temperature":0.2,"max_input_tokens":12000,"max_tokens":3000}

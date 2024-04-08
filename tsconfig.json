@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
-    "target": "es2020",
+    "target": "ES2015",
+    "lib": ["ES2015", "DOM"],
     "module": "commonjs",
     "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,

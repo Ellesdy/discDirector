@@ -1,12 +1,15 @@
-import { GuildMember, Message, PermissionsBitField } from "discord.js";
+import { injectable } from "inversify";
+import { GuildMember, PermissionsBitField } from "discord.js";
+import { AuthHelperServiceInterface } from "../../interfaces/auth.helper.service.interface";
 
-export default class AuthHelperService {
-  static hasManageRolesPermission(user: GuildMember) {
+@injectable()
+export class AuthHelperService implements AuthHelperServiceInterface {
+  hasManageRolesPermission(user: GuildMember): boolean {
     console.log(user);
     return user.permissions.has(PermissionsBitField.Flags.ManageRoles);
   }
 
-  static hasTimeoutPermission(user: GuildMember) {
+  hasTimeoutPermission(user: GuildMember): boolean {
     console.log(user);
     return user.permissions.has(PermissionsBitField.Flags.ModerateMembers);
   }

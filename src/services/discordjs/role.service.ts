@@ -1,12 +1,15 @@
-import { Snowflake, GuildMember, Role } from "discord.js";
-import GuildService from "./guild.service"; // Adjust the import path as necessary
+import { injectable, inject } from "inversify";
+import { TYPES } from "../../types"; // Adjust the import path as necessary
+import { GuildMember, Role, Snowflake } from "discord.js";
+import { RoleServiceInterface } from "../../interfaces/role.service.interface";
+import { GuildServiceInterface } from "../../interfaces/guild.service.interface";
 
-class RoleService {
-  private guildService: GuildService;
-
-  constructor(guildService: GuildService) {
-    this.guildService = guildService;
-  }
+@injectable()
+export class RoleService implements RoleServiceInterface {
+  constructor(
+    @inject(TYPES.GuildServiceInterface)
+    private guildService: GuildServiceInterface
+  ) {}
 
   async getAllRoles(guildId: Snowflake): Promise<Role[]> {
     const guild = await this.guildService.getGuild(guildId);
@@ -35,5 +38,3 @@ class RoleService {
     return Array.from(member.roles.cache.values());
   }
 }
-
-export default RoleService;

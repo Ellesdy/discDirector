@@ -1,25 +1,23 @@
-import ClientService from "../discordjs/client.service";
-import LifecycleHelperService from "../helpers/lifecycle.helper.service";
-import ValidationHelperService from "../helpers/validation.helper.service";
-import CommandService from "../discordjs/command.service";
+import { injectable, inject } from "inversify";
+import { TYPES } from "../../types";
+import { ClientServiceInterface } from "../../interfaces/client.service.interface";
+import { LifecycleHelperServiceInterface } from "../../interfaces/lifecycle.helper.service.interface";
+import { ValidationHelperServiceInterface } from "../../interfaces/validation.helper.service.interface";
+import { CommandServiceInterface } from "../../interfaces/command.service.interface";
+import { StartupServiceInterface } from "../../interfaces/startup.service.interface";
 
-class StartupService {
-  private clientService: ClientService;
-  private lifecycleHelperService: LifecycleHelperService;
-  private validationHelperService: ValidationHelperService;
-  private commandService: CommandService;
-
+@injectable()
+export class StartupService implements StartupServiceInterface {
   constructor(
-    clientService: ClientService,
-    lifecycleHelperService: LifecycleHelperService,
-    validationHelperService: ValidationHelperService,
-    commandService: CommandService
-  ) {
-    this.clientService = clientService;
-    this.lifecycleHelperService = lifecycleHelperService;
-    this.validationHelperService = validationHelperService;
-    this.commandService = commandService;
-  }
+    @inject(TYPES.ClientServiceInterface)
+    private clientService: ClientServiceInterface,
+    @inject(TYPES.LifecycleHelperServiceInterface)
+    private lifecycleHelperService: LifecycleHelperServiceInterface,
+    @inject(TYPES.ValidationHelperServiceInterface)
+    private validationHelperService: ValidationHelperServiceInterface,
+    @inject(TYPES.CommandServiceInterface)
+    private commandService: CommandServiceInterface
+  ) {}
 
   async init(): Promise<void> {
     try {
@@ -31,4 +29,3 @@ class StartupService {
     }
   }
 }
-export default StartupService;

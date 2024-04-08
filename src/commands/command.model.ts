@@ -1,17 +1,21 @@
-import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction } from "discord.js";
+import { CommandInterface } from "../interfaces/command.interface";
 
-export default class CommandModel {
+export class CommandModel implements CommandInterface {
   name: string;
+  description: string;
   data: SlashCommandBuilder;
-  execute: (interaction: CommandInteraction) => Promise<any>;
 
-  constructor(
-    name: string,
-    data: SlashCommandBuilder,
-    execute: (interaction: CommandInteraction) => Promise<any>
-  ) {
+  constructor(name: string, description: string) {
     this.name = name;
-    this.data = data;
-    this.execute = execute;
+    this.description = description;
+    this.data = new SlashCommandBuilder()
+      .setName(name)
+      .setDescription(description);
+  }
+
+  async execute(interaction: CommandInteraction): Promise<void> {
+    throw new Error("Method not implemented.");
   }
 }

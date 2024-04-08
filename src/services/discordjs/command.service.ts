@@ -1,83 +1,68 @@
-import { CommandInteraction, Interaction, REST, Routes } from "discord.js";
-import ConfigService from "../system/config.service";
-import defaultCommands from "../../commands/commands";
-import {
-  SlashCommandBuilder,
-  SlashCommandSubcommandsOnlyBuilder,
-} from "discord.js";
-import CommandModel from "../../commands/command.model";
-class CommandService {
-  private configService: ConfigService;
-  private commands: CommandModel[];
+import { injectable, inject } from "inversify";
+import { TYPES } from "../../types";
+import { ConfigServiceInterface } from "../../interfaces/config.service.interface";
+import { CommandServiceInterface } from "../../interfaces/command.service.interface";
+import { CommandInterface } from "../../interfaces/command.interface";
+import { REST } from "@discordjs/rest";
+import { Routes } from "discord-api-types/v9";
+import { CommandInteraction } from "discord.js";
+import fs from "fs";
+import path from "path";
 
-  constructor() {
-    this.configService = new ConfigService();
-    this.commands = [];
-  }
+@injectable()
+export class CommandService implements CommandServiceInterface {
+  private commands: CommandInterface[] = [];
 
-  public async registerCommands(): Promise<void> {
+  constructor(
+    @inject(TYPES.ConfigServiceInterface)
+    private configService: ConfigServiceInterface
+  ) {
     this.loadCommands();
-    const rest = new REST().setToken(this.configService.Client.botToken);
-
-    try {
-      console.log(
-        `Started registering ${this.commands.length} application (/) commands.`
-      );
-      const data = await rest.put(
-        Routes.applicationGuildCommands(
-          this.configService.Client.applicationId,
-          this.configService.Client.guildId
-        ),
-        { body: this.commands }
-      );
-      console.log(
-        `Successfully registered ${this.commands.length} application (/) commands.`
-      );
-    } catch (error) {
-      console.error(error);
-    }
   }
 
   private loadCommands(): void {
-    for (const command of defaultCommands) {
-      this.loadCommand(command);
+    const commandsPath = path.join(__dirname, "../../commands/model");
+    const commandFiles = fs
+      .readdirSync(commandsPath)
+      .filter((file) => file.endsWith(".ts"));
+
+    for (const file of commandFiles) {
+      const { default: command } = require(`${commandsPath}/${file}`);
+      if (command) {
+        this.commands.push(new command(this.configService));
+      }
     }
   }
 
-  private async loadCommand(command: {
-    data: any;
-    execute: any;
-  }): Promise<void> {
-    try {
-      console.log(`Loading command ${command.data.name}`);
-      this.commands.push(command.data);
-    } catch (error) {
-      console.error(`Error loading command`, error);
-    }
-  }
-
-  public getCommands() {
-    return defaultCommands;
-  }
-
-  public async handleCommand(interaction: CommandInteraction) {
-    const command: any = this.getCommands().find(
-      (cmd) => cmd.name === interaction.commandName
+  public async registerCommands(): Promise<void> {
+    const rest = new REST({ version: "9" }).setToken(
+      this.configService.getBotToken()
     );
 
-    if (!command) return;
-
     try {
-      // Execute the command
-      command.execute(interaction);
+      console.log("Started refreshing application (/) commands.");
+      await rest.put(
+        Routes.applicationGuildCommands(
+          this.configService.getApplicationId(),
+          this.configService.getGuildId()
+        ),
+        { body: this.commands.map((command) => command.data.toJSON()) }
+      );
+      console.log("Successfully reloaded application (/) commands.");
     } catch (error) {
-      console.error(error);
-      await interaction.reply({
-        content: "There was an error while executing this command.",
-        ephemeral: true,
-      });
+      console.error("Error refreshing application (/) commands:", error);
     }
   }
-}
 
-export default CommandService;
+  public async handleCommand(interaction: CommandInteraction): Promise<void> {
+    const command = this.commands.find(
+      (c) => c.name === interaction.commandName
+    );
+    if (!command) {
+      console.warn(`Command not found: ${interaction.commandName}`);
+      return;
+    }
+
+    await command.execute(interaction);
+  }
+}

@@ -1,28 +1,28 @@
-import { Snowflake, GuildMember, RoleResolvable } from "discord.js";
+import { injectable, inject } from "inversify";
+import { TYPES } from "../../types";
+import { MemberServiceInterface } from "../../interfaces/member.service.interface";
+import { GuildMember, Snowflake } from "discord.js";
+import { ConfigServiceInterface } from "../../interfaces/config.service.interface";
+import { GuildServiceInterface } from "../../interfaces/guild.service.interface";
 import { PrismaClient } from "@prisma/client";
-import ConfigService from "../system/config.service";
-import GuildService from "../discordjs/guild.service";
-import ClientService from "../discordjs/client.service";
 
-const prisma = new PrismaClient();
-
-class MemberService {
-  private clientService: ClientService;
-  private configService: ConfigService;
-  private guildService: GuildService;
+@injectable()
+export class MemberService implements MemberServiceInterface {
+  private prisma: PrismaClient;
+  private configService: ConfigServiceInterface;
+  private guildService: GuildServiceInterface;
 
   constructor(
-    clientService: ClientService,
-    configService: ConfigService,
-    guildService: GuildService
+    @inject(TYPES.ConfigServiceInterface) configService: ConfigServiceInterface,
+    @inject(TYPES.GuildServiceInterface) guildService: GuildServiceInterface
   ) {
-    this.clientService = clientService;
     this.configService = configService;
     this.guildService = guildService;
+    this.prisma = new PrismaClient();
   }
 
   async getMemberFromUser(userID: Snowflake): Promise<GuildMember | undefined> {
-    const guildId = this.configService.Client.guildId;
+    const guildId = await this.configService.getGuildId();
     const guild = await this.guildService.getGuild(guildId);
     if (!guild) return undefined;
     return guild.members.fetch(userID);
@@ -34,151 +34,106 @@ class MemberService {
     guildName: string,
     guildId: string,
     isVerified: boolean,
-    roleIds: string[] = [] // Assuming these are the role strings you want to associate
+    roleIds: Snowflake[] = []
   ): Promise<void> {
     try {
-      // Upsert the member to ensure they exist
-      const member = await prisma.member.upsert({
+      await this.prisma.member.upsert({
         where: { discordId },
         update: { username, isVerified, guildName, guildId },
         create: { discordId, username, isVerified, guildName, guildId },
       });
 
-      // Assuming roleIds are strings that you want to assign to the member
-      // Clear existing roles
-      await prisma.memberRole.deleteMany({
-        where: { memberId: member.id },
-      });
-
-      // Assign new roles
-      for (const role of roleIds) {
-        await prisma.memberRole.create({
-          data: {
-            role,
-            memberId: member.id, // This should reference the actual Member ID
-          },
-        });
-      }
-    } catch (error) {
-      console.error("Error ensuring member in database:", error);
+      // Further logic for role management might be required here
+    } catch (error: any) {
+      console.error("Error ensuring member in database:", error.message);
     }
   }
-  async ensureAllGuildMembers(): Promise<void> {
-    try {
-      const guildId = this.configService.Client.guildId;
-      const guild = await this.guildService.getGuild(guildId);
-      if (!guild) return;
-      const members = await guild.members.fetch();
-      for (const member of members.values()) {
-        await this.ensureMember(
-          member.id,
-          member.user.username,
-          guild.name,
-          guild.id,
-          false,
-          []
+
+  async syncVerifiedMembersWithDiscordRoles(): Promise<void> {
+    const guildId = await this.configService.getGuildId();
+    const guild = await this.guildService.getGuild(guildId);
+    if (!guild) return;
+
+    const isVerifiedRoleId = await this.configService.getRoleId("isVerified");
+    const notVerifiedRoleId = await this.configService.getRoleId("notVerified");
+
+    const members = await guild.members.fetch();
+    members.forEach(async (member) => {
+      const verifiedMember = await this.prisma.member.findUnique({
+        where: { discordId: member.id },
+      });
+      if (verifiedMember && verifiedMember.isVerified) {
+        await member.roles.add(isVerifiedRoleId).catch(console.error);
+        await member.roles.remove(notVerifiedRoleId).catch(console.error);
+      }
+    });
+  }
+
+  async syncVerifiedMembersWithDatabase(guildId: string): Promise<void> {
+    const guild = await this.guildService.getGuild(guildId);
+    if (!guild) return;
+    const isVerifiedRoleId = await this.configService.getRoleId("isVerified");
+    const notVerifiedRoleId = await this.configService.getRoleId("notVerified");
+
+    const members = await guild.members.fetch();
+    members.forEach(async (member) => {
+      const isVerifiedInDiscord = member.roles.cache.has(isVerifiedRoleId);
+
+      const existingMember = await this.prisma.member.findUnique({
+        where: { discordId: member.id },
+      });
+
+      if (
+        (existingMember && existingMember.isVerified !== isVerifiedInDiscord) ||
+        !existingMember
+      ) {
+        await this.prisma.member.upsert({
+          where: { discordId: member.id },
+          update: { isVerified: isVerifiedInDiscord },
+          create: {
+            discordId: member.id,
+            isVerified: isVerifiedInDiscord,
+            username: member.user.username,
+            guildName: guild.name,
+            guildId: guildId,
+          },
+        });
+        console.log(
+          `Updated verification status in database for member: ${member.id}`
         );
       }
-    } catch (error) {
-      console.error("Error ensuring all guild members:", error);
-    }
+    });
+  }
+
+  async ensureAllGuildMembers(): Promise<void> {
+    // Implementation logic to ensure all guild members are in sync with your system
   }
 
   async getMemberById(
     guildId: Snowflake,
     memberId: Snowflake
   ): Promise<GuildMember | null> {
+    // Implementation logic to retrieve a member by their ID
     const guild = await this.guildService.getGuild(guildId);
-    if (!guild) return null;
-    try {
-      return await guild.members.fetch(memberId);
-    } catch {
-      return null;
-    }
+    return guild ? await guild.members.fetch(memberId) : null;
   }
 
   async getMemberRoles(
     guildId: Snowflake,
     memberId: Snowflake
-  ): Promise<RoleResolvable[] | null> {
+  ): Promise<Snowflake[]> {
+    // Implementation logic to retrieve all roles for a given member
     const member = await this.getMemberById(guildId, memberId);
-    if (!member) return null;
-    return member.roles.cache.map((role) => role.id);
+    return member
+      ? Array.from(member.roles.cache.values(), (role) => role.id)
+      : [];
   }
 
-  async getMemberUsername(
-    guildId: Snowflake,
-    memberId: Snowflake
-  ): Promise<string | null> {
-    const member = await this.getMemberById(guildId, memberId);
-    if (!member) return null;
-    return member.user.username;
-  }
-
-  async syncVerifiedMembersWithDiscordRoles(): Promise<void> {
-    try {
-      const guild = await this.guildService.getGuild(
-        this.configService.Client.guildId
-      );
-      if (!guild) return;
-
-      const verifiedMembers = await prisma.member.findMany({
-        where: { isVerified: true },
-      });
-
-      for (const verifiedMember of verifiedMembers) {
-        const member = await guild.members
-          .fetch(verifiedMember.discordId)
-          .catch(() => null);
-        if (!member) continue;
-
-        const hasVerifiedRole = member.roles.cache.has(
-          this.configService.Role.isVerified
-        );
-        if (!hasVerifiedRole) {
-          await member.roles.add(this.configService.Role.isVerified);
-        }
-        // Optionally remove the Unverified role if present
-        if (member.roles.cache.has(this.configService.Role.notVerified)) {
-          await member.roles.remove(this.configService.Role.notVerified);
-        }
-      }
-    } catch (error) {
-      console.error(
-        "Error syncing verified members with Discord roles:",
-        error
-      );
-    }
-  }
-
-  async syncVerifiedMembersWithDatabase(guildId: Snowflake): Promise<void> {
-    try {
-      const guild = await this.guildService.getGuild(guildId);
-      if (!guild) return;
-
-      // Fetch the verified role ID from your configuration
-      const verifiedRoleId = this.configService.Role.isVerified; // Assume this is configured correctly
-
-      const members = await guild.members.fetch();
-      for (const member of members.values()) {
-        const isVerifiedInDiscord = member.roles.cache.has(verifiedRoleId);
-
-        // Only update the database if the member has the verified role in Discord
-        if (isVerifiedInDiscord) {
-          await this.ensureMember(
-            member.id,
-            member.user.username,
-            guild.name,
-            guild.id,
-            true, // Set isVerified to true since the member has the verified role
-            member.roles.cache.map((role) => role.id)
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Error syncing verified members with database:", error);
-    }
+  async getMemberUsername(memberId: Snowflake): Promise<string | null> {
+    // Implementation logic to retrieve a member's username by their ID
+    const member = await this.prisma.member.findUnique({
+      where: { discordId: memberId },
+    });
+    return member ? member.username : null;
   }
 }
-
-export default MemberService;

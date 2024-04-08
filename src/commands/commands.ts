@@ -1,3 +1,4 @@
-import VerifyCommand from "./model/verify";
+import { serviceContainer } from "../inversify.config"; // Adjust the import path as needed
+import { VerifyCommand } from "./model/verify";
 
-export default [VerifyCommand];
+export const commands = [serviceContainer.resolve(VerifyCommand)];
