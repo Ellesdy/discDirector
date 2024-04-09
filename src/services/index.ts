@@ -1,7 +1,7 @@
 export * from "./discordjs/role.service";
 export * from "./discordjs/guild.service";
 export * from "./discordjs/member.service";
-export * from "./system/startup.service";
+export * from "./system/application.service";
 export * from "./helpers/lifecycle.helper.service";
 export * from "./helpers/validation.helper.service";
 export * from "./helpers/auth.helper.service";
@@ -12,4 +12,4 @@ export * from "./discordjs/client.service";
 export * from "../commands/command.model";
 export * from "./discordjs/command.service";
 export * from "./system/message.service";
-export * from "./discordjs/channel.service"
+export * from "./discordjs/channel.service";

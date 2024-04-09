@@ -10,6 +10,6 @@ export * from "./logger.service.interface";
 export * from "./member.service.interface";
 export * from "./message.service.interface";
 export * from "./role.service.interface";
-export * from "./startup.service.interface";
+export * from "./application.service.interface";
 export * from "./validation.helper.service.interface";
 export * from "./channel.service.interface";

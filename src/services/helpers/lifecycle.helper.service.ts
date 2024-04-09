@@ -36,7 +36,7 @@ export class LifecycleHelperService {
         await this.memberService.ensureAllGuildMembers();
         await this.memberService.syncVerifiedMembersWithDiscordRoles();
         await this.memberService.syncVerifiedMembersWithDatabase(
-          this.configService.getGuildId()
+          this.configService.Client.guildId
         );
       }
     });

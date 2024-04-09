@@ -36,15 +36,15 @@ export class CommandService implements CommandServiceInterface {
 
   public async registerCommands(): Promise<void> {
     const rest = new REST({ version: "9" }).setToken(
-      this.configService.getBotToken()
+      this.configService.Client.botToken
     );
 
     try {
       console.log("Started refreshing application (/) commands.");
       await rest.put(
         Routes.applicationGuildCommands(
-          this.configService.getApplicationId(),
-          this.configService.getGuildId()
+          this.configService.Client.applicationId,
+          this.configService.Client.guildId
         ),
         { body: this.commands.map((command) => command.data.toJSON()) }
       );

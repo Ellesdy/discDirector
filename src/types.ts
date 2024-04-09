@@ -1,5 +1,3 @@
-import { ChannelType } from "discord.js";
-
 export const TYPES = {
   LoggerServiceInterface: Symbol.for("LoggerServiceInterface"),
   ConfigServiceInterface: Symbol.for("ConfigServiceInterface"),
@@ -14,7 +12,7 @@ export const TYPES = {
   LifecycleHelperServiceInterface: Symbol.for(
     "LifecycleHelperServiceInterface"
   ),
-  StartupServiceInterface: Symbol.for("StartupServiceInterface"),
+  ApplicationServiceInterface: Symbol.for("ApplicationServiceInterface"),
   MessageServiceInterface: Symbol.for("MessageServiceInterface"),
   MemberServiceInterface: Symbol.for("MemberServiceInterface"),
   GuildServiceInterface: Symbol.for("GuildServiceInterface"),
@@ -43,11 +41,3 @@ export type RoleConfigType = {
   isVerified: string;
   notVerified: string;
 };
-
-export type GuildChannelType =
-  | ChannelType.GuildText
-  | ChannelType.GuildVoice
-  | ChannelType.GuildCategory
-  | ChannelType.GuildNews
-  | ChannelType.GuildStageVoice
-  | undefined;

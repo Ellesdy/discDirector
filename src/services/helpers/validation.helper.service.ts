@@ -3,7 +3,7 @@ import { TYPES } from "../../types";
 import { LoggerServiceInterface } from "../../interfaces/logger.service.interface";
 import { ConfigServiceInterface } from "../../interfaces/config.service.interface";
 import { ValidationHelperServiceInterface } from "../../interfaces/validation.helper.service.interface";
-import { ConfigType } from "../../types"; // Import ConfigType from where it is defined
+import { ConfigType } from "../../types"; 
 
 @injectable()
 export class ValidationHelperService
@@ -52,7 +52,7 @@ export class ValidationHelperService
       if (!parsedConfig.Name || typeof parsedConfig.Content === "undefined") {
         throw new Error("Config is missing Name or Content.");
       }
-      return parsedConfig as ConfigType; // Now correctly recognizes ConfigType
+      return parsedConfig as ConfigType; 
     } catch (e) {
       if (e instanceof Error) {
         throw new Error(`Error parsing config: ${e.message}`);
@@ -63,7 +63,7 @@ export class ValidationHelperService
   }
 
   async validateAll(): Promise<void> {
-    const configs = await this.configService.GetAllConfigs(); // Adding 'await' here
+    const configs = await this.configService.GetAllConfigs(); 
     this.logValidationStart("config");
 
     for (const config of configs) {

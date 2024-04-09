@@ -18,7 +18,6 @@ export class ChannelService implements ChannelServiceInterface {
     userId: string
   ): Promise<VoiceChannel | StageChannel | null> {
     const member = await guild.members.fetch(userId);
-    // member.voice.channel can be either a VoiceChannel or a StageChannel
     return member.voice.channel;
   }
 
@@ -28,7 +27,6 @@ export class ChannelService implements ChannelServiceInterface {
   ): Promise<GuildChannel[]> {
     const category = guild.channels.cache.get(categoryId) as CategoryChannel;
     if (category && category.type === ChannelType.GuildCategory) {
-      // Access the channels with Array.from(category.children.cache.values())
       return Array.from(category.children.cache.values());
     }
     return [];
@@ -41,7 +39,6 @@ export class ChannelService implements ChannelServiceInterface {
       channel.type === ChannelType.GuildVoice ||
       channel.type === ChannelType.GuildStageVoice
     ) {
-      // Handling VoiceChannel and StageChannel specifically
       return Array.from(
         (channel as VoiceChannel | StageChannel).members.values()
       );

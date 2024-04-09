@@ -1,10 +1,9 @@
-import { ConfigType } from "../types";
+import { ConfigType, ChannelConfigType, ClientConfigType, RoleConfigType } from "../types";
 
 export interface ConfigServiceInterface {
+  Channel: ChannelConfigType;
+  Client: ClientConfigType;
+  Role: RoleConfigType;
   GetAllConfigs(): Promise<ConfigType[]>;
   UpdateConfig(name: string, config: ConfigType): Promise<void>;
-  getBotToken(): string;
-  getApplicationId(): string;
-  getGuildId(): string;
-  getRoleId(roleName: string): string; // Correctly include the parameter in the interface
 }

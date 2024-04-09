@@ -22,7 +22,7 @@ export class MemberService implements MemberServiceInterface {
   }
 
   async getMemberFromUser(userID: Snowflake): Promise<GuildMember | undefined> {
-    const guildId = await this.configService.getGuildId();
+    const guildId = await this.configService.Client.guildId;
     const guild = await this.guildService.getGuild(guildId);
     if (!guild) return undefined;
     return guild.members.fetch(userID);
@@ -42,20 +42,18 @@ export class MemberService implements MemberServiceInterface {
         update: { username, isVerified, guildName, guildId },
         create: { discordId, username, isVerified, guildName, guildId },
       });
-
-      // Further logic for role management might be required here
     } catch (error: any) {
       console.error("Error ensuring member in database:", error.message);
     }
   }
 
   async syncVerifiedMembersWithDiscordRoles(): Promise<void> {
-    const guildId = await this.configService.getGuildId();
+    const guildId = await this.configService.Client.guildId;
     const guild = await this.guildService.getGuild(guildId);
     if (!guild) return;
 
-    const isVerifiedRoleId = await this.configService.getRoleId("isVerified");
-    const notVerifiedRoleId = await this.configService.getRoleId("notVerified");
+    const isVerifiedRoleId = await this.configService.Role.isVerified;
+    const notVerifiedRoleId = await this.configService.Role.notVerified;
 
     const members = await guild.members.fetch();
     members.forEach(async (member) => {
@@ -72,8 +70,8 @@ export class MemberService implements MemberServiceInterface {
   async syncVerifiedMembersWithDatabase(guildId: string): Promise<void> {
     const guild = await this.guildService.getGuild(guildId);
     if (!guild) return;
-    const isVerifiedRoleId = await this.configService.getRoleId("isVerified");
-    const notVerifiedRoleId = await this.configService.getRoleId("notVerified");
+    const isVerifiedRoleId = await this.configService.Role.isVerified;
+    const notVerifiedRoleId = await this.configService.Role.notVerified;
 
     const members = await guild.members.fetch();
     members.forEach(async (member) => {
@@ -105,15 +103,12 @@ export class MemberService implements MemberServiceInterface {
     });
   }
 
-  async ensureAllGuildMembers(): Promise<void> {
-    // Implementation logic to ensure all guild members are in sync with your system
-  }
+  async ensureAllGuildMembers(): Promise<void> {}
 
   async getMemberById(
     guildId: Snowflake,
     memberId: Snowflake
   ): Promise<GuildMember | null> {
-    // Implementation logic to retrieve a member by their ID
     const guild = await this.guildService.getGuild(guildId);
     return guild ? await guild.members.fetch(memberId) : null;
   }
@@ -122,7 +117,6 @@ export class MemberService implements MemberServiceInterface {
     guildId: Snowflake,
     memberId: Snowflake
   ): Promise<Snowflake[]> {
-    // Implementation logic to retrieve all roles for a given member
     const member = await this.getMemberById(guildId, memberId);
     return member
       ? Array.from(member.roles.cache.values(), (role) => role.id)
@@ -130,7 +124,6 @@ export class MemberService implements MemberServiceInterface {
   }
 
   async getMemberUsername(memberId: Snowflake): Promise<string | null> {
-    // Implementation logic to retrieve a member's username by their ID
     const member = await this.prisma.member.findUnique({
       where: { discordId: memberId },
     });

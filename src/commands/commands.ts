@@ -1,4 +1,7 @@
-import { serviceContainer } from "../inversify.config"; // Adjust the import path as needed
-import { VerifyCommand } from "./model/verify";
+import { serviceContainer } from "../inversify.config";
+import { CommandInterface } from "../interfaces/command.interface";
+import { VerifyCommand } from "./model/index";
 
-export const commands = [serviceContainer.resolve(VerifyCommand)];
+export function loadCommands(): CommandInterface[] {
+  return [serviceContainer.resolve<CommandInterface>(VerifyCommand)];
+}

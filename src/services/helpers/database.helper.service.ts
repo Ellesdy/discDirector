@@ -1,5 +1,3 @@
-// src/services/database.helper.service.ts
-
 import { injectable } from "inversify";
 import { PrismaClient } from "@prisma/client";
 import { DatabaseHelperServiceInterface } from "../../interfaces/database.helper.service.interface";
@@ -43,27 +41,21 @@ export class DatabaseHelperService implements DatabaseHelperServiceInterface {
   }
 
   async updateMemberRoles(discordId: string, roleIds: string[]): Promise<void> {
-    // Assuming you have a relation set up in your Prisma schema between members and roles
-    // This will remove all existing roles and add the new ones provided
     const member = await this.findMemberById(discordId);
     if (!member) {
       console.error(`Member with ID ${discordId} not found.`);
       return;
     }
 
-    // Begin a transaction to ensure data consistency
     await this.prisma.$transaction(async (prisma) => {
-      // Remove existing roles
       await prisma.memberRole.deleteMany({
         where: { memberId: member.id },
       });
-
-      // Add new roles
       for (const roleId of roleIds) {
         await prisma.memberRole.create({
           data: {
             memberId: member.id,
-            role: roleId, // Assuming your MemberRole model uses 'roleId' to reference roles
+            role: roleId, 
           },
         });
       }

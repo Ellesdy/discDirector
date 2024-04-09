@@ -1,23 +1,18 @@
-import "reflect-metadata"; // Required for InversifyJS
-import { serviceContainer } from "./inversify.config"; // Assuming serviceContainer is your renamed InversifyJS container
+import "reflect-metadata";
+import { serviceContainer } from "./inversify.config";
+import { ApplicationServiceInterface } from "./interfaces/application.service.interface";
+
 import { TYPES } from "./types";
-import { StartupServiceInterface } from "./interfaces/startup.service.interface";
 
-async function initializeServices() {
+(async () => {
   try {
-    const startupService = serviceContainer.get<StartupServiceInterface>(
-      TYPES.StartupServiceInterface
-    );
-
-    if (startupService) {
-      await startupService.init();
-      console.log("Startup service initialized successfully");
-    } else {
-      console.error("Startup service is not available or can't be initialized");
-    }
-  } catch (err) {
-    console.error("Error initializing services:", err);
+    const applicationService =
+      serviceContainer.get<ApplicationServiceInterface>(
+        TYPES.ApplicationServiceInterface
+      );
+    await applicationService.init();
+    console.log("Application initialized successfully");
+  } catch (error) {
+    console.error("Fatal error during application initialization:", error);
   }
-}
-
-initializeServices();
+})();

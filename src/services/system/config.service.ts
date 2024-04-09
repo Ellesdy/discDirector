@@ -44,27 +44,4 @@ export class ConfigService implements ConfigServiceInterface {
         throw new Error("Unknown config name");
     }
   }
-
-  public getBotToken(): string {
-    return this.Client.botToken;
-  }
-
-  public getApplicationId(): string {
-    return this.Client.applicationId;
-  }
-
-  public getGuildId(): string {
-    return this.Client.guildId;
-  }
-
-  // Implement the getRoleId method
-  public getRoleId(roleName: string): string {
-    // Access the Role configuration to return the requested role ID
-    // This is a simple implementation; adjust according to your actual configuration structure
-    const role = this.Role[roleName as keyof RoleConfigType];
-    if (!role) {
-      throw new Error(`Role ID for '${roleName}' not found.`);
-    }
-    return role;
-  }
 }

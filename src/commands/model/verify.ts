@@ -19,7 +19,7 @@ export class VerifyCommand implements CommandInterface {
         .setDescription("The user to verify")
         .setRequired(true)
     );
-  public name: string = "verify"; // Since data.name might not be directly accessible
+  public name: string = "verify";
   public description: string = "Verifies a user.";
 
   constructor(
@@ -28,50 +28,50 @@ export class VerifyCommand implements CommandInterface {
   ) {}
 
   public async execute(interaction: CommandInteraction): Promise<void> {
-    if (!(interaction.member instanceof GuildMember) || !interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used within a server.",
-        ephemeral: true,
-      });
-      return;
-    }
-
-    const userToVerify = interaction.options.getUser("user", true);
-    if (!userToVerify) return; // Additional check for safety
-
-    const memberToVerify = await interaction.guild.members.fetch(
-      userToVerify.id
-    );
-
-    // Correctly retrieve role IDs
-    const canVerifyRoleId = await this.configService.getRoleId("canVerify");
-    const isVerifiedRoleId = await this.configService.getRoleId("isVerified");
-    const notVerifiedRoleId = await this.configService.getRoleId("notVerified");
-
-    // Ensure the roles are correctly fetched before proceeding with logic
-    if (!memberToVerify.roles.cache.has(canVerifyRoleId)) {
-      await interaction.reply({
-        content: "You don't have permission to use this command.",
-        ephemeral: true,
-      });
-      return;
-    }
-
-    // Example verification logic
-    if (!memberToVerify.roles.cache.has(isVerifiedRoleId)) {
-      await memberToVerify.roles.add(isVerifiedRoleId);
-      if (memberToVerify.roles.cache.has(notVerifiedRoleId)) {
-        await memberToVerify.roles.remove(notVerifiedRoleId);
+    try {
+      if (!(interaction.member instanceof GuildMember) || !interaction.guild) {
+        await interaction.reply({
+          content: "This command can only be used within a server.",
+          ephemeral: true,
+        });
+        return;
       }
 
-      // Update the database accordingly
-      // Assuming you have a method in the database helper to handle this
-
-      await interaction.reply(
-        `${userToVerify.username} has been verified successfully.`
+      const userToVerify = interaction.options.getUser("user", true);
+      const memberToVerify = await interaction.guild.members.fetch(
+        userToVerify.id
       );
-    } else {
-      await interaction.reply(`${userToVerify.username} is already verified.`);
+
+      const canVerifyRoleId = this.configService.Role.canVerify;
+      const isVerifiedRoleId = this.configService.Role.isVerified;
+      const notVerifiedRoleId = this.configService.Role.notVerified;
+
+      if (!interaction.member.roles.cache.has(canVerifyRoleId)) {
+        await interaction.reply({
+          content: "You don't have permission to use this command.",
+          ephemeral: true,
+        });
+        return;
+      }
+      if (!memberToVerify.roles.cache.has(isVerifiedRoleId)) {
+        await memberToVerify.roles.add(isVerifiedRoleId);
+        if (memberToVerify.roles.cache.has(notVerifiedRoleId)) {
+          await memberToVerify.roles.remove(notVerifiedRoleId);
+        }
+        await interaction.reply(
+          `${userToVerify.username} has been verified successfully.`
+        );
+      } else {
+        await interaction.reply(
+          `${userToVerify.username} is already verified.`
+        );
+      }
+    } catch (error) {
+      console.error("Error executing /verify command:", error);
+      await interaction.reply({
+        content: "An error occurred while processing your request.",
+        ephemeral: true,
+      });
     }
   }
 }

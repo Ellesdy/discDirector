@@ -1,12 +1,16 @@
-import { injectable } from "inversify";
-import { MessageService } from "./message.service";
+import { injectable, inject } from "inversify";
+import { TYPES } from "../../types";
+import { MessageServiceInterface } from "../../interfaces/message.service.interface";
 import { LoggerServiceInterface } from "../../interfaces/logger.service.interface";
 
 @injectable()
 export class LoggerService implements LoggerServiceInterface {
-  private messageService: MessageService;
+  private messageService: MessageServiceInterface;
 
-  constructor(messageService: MessageService) {
+  constructor(
+    @inject(TYPES.MessageServiceInterface)
+    messageService: MessageServiceInterface
+  ) {
     this.messageService = messageService;
   }
 

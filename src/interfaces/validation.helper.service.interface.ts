@@ -7,6 +7,6 @@ export interface ValidationHelperServiceInterface {
     error: Error
   ): void;
   logValidationEnd(validationType: string): void;
-  validateConfig(config: string | null | undefined): any; // Consider specifying a more precise return type than any
+  validateConfig(config: string | null | undefined): any; 
   validateAll(): Promise<void>;
 }

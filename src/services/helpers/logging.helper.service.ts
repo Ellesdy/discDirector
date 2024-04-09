@@ -1,15 +1,19 @@
+import { injectable, inject } from "inversify";
+import { TYPES } from "../../types";
+import { ClientServiceInterface } from "../../interfaces/client.service.interface";
+import { ConfigServiceInterface } from "../../interfaces/config.service.interface";
 import { Client, TextChannel, VoiceState, GuildMember } from "discord.js";
-import { ClientService } from "../discordjs/client.service";
-import { ConfigService } from "../system/config.service";
 
+@injectable()
 export class LoggingHelperService {
-  private clientService: ClientService;
-  private configService: ConfigService;
   private logChannelId: string;
 
-  constructor(clientService: ClientService, configService: ConfigService) {
-    this.clientService = clientService;
-    this.configService = configService;
+  constructor(
+    @inject(TYPES.ClientServiceInterface)
+    private clientService: ClientServiceInterface,
+    @inject(TYPES.ConfigServiceInterface)
+    private configService: ConfigServiceInterface
+  ) {
     this.logChannelId = this.configService.Channel.logChannelId;
     const client = this.clientService.Client;
     this.setupListeners(client);

@@ -12,7 +12,7 @@ import {
   CommandServiceInterface,
   LifecycleHelperServiceInterface,
   MessageServiceInterface,
-  StartupServiceInterface,
+  ApplicationServiceInterface,
   MemberServiceInterface,
   GuildServiceInterface,
   RoleServiceInterface,
@@ -23,7 +23,7 @@ import {
   RoleService,
   GuildService,
   MemberService,
-  StartupService,
+  ApplicationService,
   LifecycleHelperService,
   ValidationHelperService,
   AuthHelperService,
@@ -47,8 +47,8 @@ serviceContainer
   .bind<LoggerServiceInterface>(TYPES.LoggerServiceInterface)
   .to(LoggerService);
 serviceContainer
-  .bind<StartupServiceInterface>(TYPES.StartupServiceInterface)
-  .to(StartupService);
+  .bind<ApplicationServiceInterface>(TYPES.ApplicationServiceInterface)
+  .to(ApplicationService);
 serviceContainer
   .bind<MessageServiceInterface>(TYPES.MessageServiceInterface)
   .to(MessageService);
