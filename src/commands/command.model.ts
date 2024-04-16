@@ -1,7 +1,9 @@
+import { injectable } from "inversify";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandInteraction } from "discord.js";
 import { CommandInterface } from "../interfaces/command.interface";
 
+@injectable()
 export class CommandModel implements CommandInterface {
   name: string;
   description: string;

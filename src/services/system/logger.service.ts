@@ -43,11 +43,11 @@ export class LoggerService implements LoggerServiceInterface {
     console.warn(formattedMessage);
   }
 
-  logError(message: string): void {
-    const formattedMessage = this.messageService.formatMessage(
-      message,
-      "ERROR"
-    );
-    console.error(formattedMessage);
+  logError(message: string, error?: Error) {
+    if (error) {
+      console.error(message, error.message);
+    } else {
+      console.error(message);
+    }
   }
 }

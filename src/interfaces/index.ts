@@ -13,3 +13,4 @@ export * from "./role.service.interface";
 export * from "./application.service.interface";
 export * from "./validation.helper.service.interface";
 export * from "./channel.service.interface";
+export * from "./logger.helper.service.interface";

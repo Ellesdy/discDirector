@@ -1,8 +1,10 @@
+// src/services/discordjs/command.service.ts
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../types";
-import { ConfigServiceInterface } from "../../interfaces/config.service.interface";
 import { CommandServiceInterface } from "../../interfaces/command.service.interface";
 import { CommandInterface } from "../../interfaces/command.interface";
+import { ConfigServiceInterface } from "../../interfaces/config.service.interface";
+import { LoggerServiceInterface } from "../../interfaces/logger.service.interface";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
 import { CommandInteraction } from "discord.js";
@@ -15,7 +17,9 @@ export class CommandService implements CommandServiceInterface {
 
   constructor(
     @inject(TYPES.ConfigServiceInterface)
-    private configService: ConfigServiceInterface
+    private configService: ConfigServiceInterface,
+    @inject(TYPES.LoggerServiceInterface)
+    private loggerService: LoggerServiceInterface
   ) {
     this.loadCommands();
   }
@@ -24,21 +28,33 @@ export class CommandService implements CommandServiceInterface {
     const commandsPath = path.join(__dirname, "../../commands/model");
     const commandFiles = fs
       .readdirSync(commandsPath)
-      .filter((file) => file.endsWith(".ts"));
+      .filter((file) => file.endsWith(".ts") || file.endsWith(".js"));
 
     for (const file of commandFiles) {
-      const { default: command } = require(`${commandsPath}/${file}`);
-      if (command) {
-        this.commands.push(new command(this.configService));
+      try {
+        const { default: Command } = require(`${commandsPath}/${file}`);
+        if (typeof Command === "function") {
+          this.commands.push(new Command(this.configService));
+          this.loggerService.logInfo(`Loaded command from file: ${file}`);
+        } else {
+          throw new TypeError("Exported Command is not a constructor");
+        }
+      } catch (error) {
+        this.loggerService.logError(
+          `Failed to load command from file: ${file}: ${error}`
+        );
       }
     }
+
+    this.loggerService.logInfo(
+      `Total commands loaded: ${this.commands.length}`
+    );
   }
 
   public async registerCommands(): Promise<void> {
     const rest = new REST({ version: "9" }).setToken(
       this.configService.Client.botToken
     );
-
     try {
       console.log("Started refreshing application (/) commands.");
       await rest.put(
@@ -46,7 +62,9 @@ export class CommandService implements CommandServiceInterface {
           this.configService.Client.applicationId,
           this.configService.Client.guildId
         ),
-        { body: this.commands.map((command) => command.data.toJSON()) }
+        {
+          body: this.commands.map((command) => command.data.toJSON()),
+        }
       );
       console.log("Successfully reloaded application (/) commands.");
     } catch (error) {
@@ -63,6 +81,13 @@ export class CommandService implements CommandServiceInterface {
       return;
     }
 
-    await command.execute(interaction);
+    try {
+      await command.execute(interaction);
+    } catch (error) {
+      console.error(
+        `Error executing command ${interaction.commandName}:`,
+        error
+      );
+    }
   }
 }

@@ -6,10 +6,11 @@ import { MessageServiceInterface } from "../../interfaces/message.service.interf
 import { MemberServiceInterface } from "../../interfaces/member.service.interface";
 import { LoggerServiceInterface } from "../../interfaces/logger.service.interface";
 import { ConfigServiceInterface } from "../../interfaces/config.service.interface";
+import { LifecycleHelperServiceInterface } from "../../interfaces";
 import { GuildMember, Interaction } from "discord.js";
 
 @injectable()
-export class LifecycleHelperService {
+export class LifecycleHelperService implements LifecycleHelperServiceInterface {
   constructor(
     @inject(TYPES.ConfigServiceInterface)
     private configService: ConfigServiceInterface,

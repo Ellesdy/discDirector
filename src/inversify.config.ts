@@ -17,6 +17,7 @@ import {
   GuildServiceInterface,
   RoleServiceInterface,
   ChannelServiceInterface,
+  LoggerHelperServiceInterface,
 } from "./interfaces";
 // Implementations
 import {
@@ -35,6 +36,7 @@ import {
   CommandService,
   MessageService,
   ChannelService,
+  LoggerHelperService,
 } from "./services";
 
 export const serviceContainer = new Container();
@@ -88,6 +90,9 @@ serviceContainer
 serviceContainer
   .bind<LifecycleHelperServiceInterface>(TYPES.LifecycleHelperServiceInterface)
   .to(LifecycleHelperService);
+serviceContainer
+  .bind<LoggerHelperServiceInterface>(TYPES.LoggerHelperServiceInterface)
+  .to(LoggerHelperService);
 
 // Commands
 serviceContainer

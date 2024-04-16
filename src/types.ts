@@ -18,6 +18,7 @@ export const TYPES = {
   GuildServiceInterface: Symbol.for("GuildServiceInterface"),
   RoleServiceInterface: Symbol.for("RoleServiceInterfaceInterface"),
   ChannelServiceInterface: Symbol.for("ChannelServiceInterface"),
+  LoggerHelperServiceInterface: Symbol.for("LoggerHelperServiceInterface"),
 };
 
 export type ConfigType = {

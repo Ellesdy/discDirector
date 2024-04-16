@@ -13,3 +13,4 @@ export * from "../commands/command.model";
 export * from "./discordjs/command.service";
 export * from "./system/message.service";
 export * from "./discordjs/channel.service";
+export * from "./helpers/logger.helper.service";
